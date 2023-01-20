@@ -56,9 +56,9 @@ int main(void)
 	insert(40);
 	insert(56);
 
-	dlistint_t *ptr = head;
+	dlistint_t *ptr = head; // pointer to list
+	dlistint_t **dptr = &ptr; // pointer to list pointer
 
-	print_dlistint(ptr); // tests print_dlistint function
-	printf("The number of nodes is: %lu\n", dlistint_len(ptr)); // tests dlistint_len function
+	pint_handler(dptr, 2);
 	return (0);
 }
