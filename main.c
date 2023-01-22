@@ -1,63 +1,75 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include "monty.h"
 #include "lists.h"
 
-dlistint_t *head = NULL;
-dlistint_t *last = NULL;
-
-dlistint_t *current = NULL;
+data_t data = DATA_INIT;
 
 /**
- * insert - creates a doubly linked list and insert data
- * @data: data to be inserted
+ * monty - helper function for main function
+ * @args: pointer to struct of arguments from main
  *
- * Return: Nothing
+ * Description: opens and reads from the file
+ * containing the opcodes, and calls the function
+ * that will find the corresponding executing function
  */
-void insert(int data)
+void monty(args_t *args)
 {
-//Allocate memory for new node
-dlistint_t *link = (dlistint_t *) malloc(sizeof(dlistint_t));
+	size_t len = 0;
+	int get = 0;
+	void (*code_func)(stack_t **, unsigned int);
 
-link->n = data;
-link->prev = NULL;
-link->next = NULL;
-
-// If head is empty, create new list
-if (head == NULL)
-{
-head = link;
-return;
-}
-
-current = head;
-
-// move to end of the list
-while (current->next != NULL)
-current = current->next;
-
-// Insert link at the end of the list
-current->next = link;
-last = link;
-link->prev = current;
+	if (args->ac != 2)
+	{
+		dprintf(STDERR_FILENO, USAGE);
+		exit(EXIT_FAILURE);
+	}
+	data.fptr = fopen(args->av, "r");
+	if (!data.fptr)
+	{
+		dprintf(STDERR_FILENO, FILE_ERROR, args->av);
+		exit(EXIT_FAILURE);
+	}
+	while (1)
+	{
+		args->line_number++;
+		get = getline(&(data.line), &len, data.fptr);
+		if (get < 0)
+			break;
+		data.words = strtow(data.line);
+		if (data.words[0] == NULL || data.words[0][0] == '#')
+		{
+			free_all(0);
+			continue;
+		}
+		code_func = get_func(data.words);
+		if (!code_func)
+		{
+			dprintf(STDERR_FILENO, UNKNOWN, args->line_number, data.words[0]);
+			free_all(1);
+			exit(EXIT_FAILURE);
+		}
+		code_func(&(data.stack), args->line_number);
+		free_all(0);
+	}
+	free_all(1);
 }
 
 /**
- * main - entry point
+ * main - entry point for monty bytecode interpreter
+ * @argc: number of arguments
+ * @argv: array of arguments
  *
- * Return: 0 on success
+ * Return: EXIT_SUCCESS or EXIT_FAILURE
  */
-
-int main(void)
+int main(int argc, char *argv[])
 {
-	insert(10);
-	insert(20);
-	insert(30);
-	insert(1);
-	insert(40);
-	insert(56);
+	args_t args;
 
-	dlistint_t *ptr = head; // pointer to list
-	dlistint_t **dptr = &ptr; // pointer to list pointer
+	args.av = argv[1];
+	args.ac = argc;
+	args.line_number = 0;
 
-	return (0);
+	monty(&args);
+
+	return (EXIT_SUCCESS);
 }
+
