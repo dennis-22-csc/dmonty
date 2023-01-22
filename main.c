@@ -59,6 +59,5 @@ int main(void)
 	dlistint_t *ptr = head; // pointer to list
 	dlistint_t **dptr = &ptr; // pointer to list pointer
 
-	pint_handler(dptr, 2);
 	return (0);
 }
